@@ -26,9 +26,9 @@ Specifically, for each `(layer, head)`, we:
 - train codebooks separately on prefill keys and all keys, align centroids with the **Hungarian algorithm** to account for arbitrary cluster-index permutations, and measure the mean L2 displacement between matched centroids;
 - normalize this drift by the mean L2 norm of keys for cross-head comparability.
 
-We visualize normalized drift and `DeltaR` as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and `DeltaR`, as well as **partial correlations** between drift and `abs(DeltaR)` while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
+We visualize normalized drift and `ΔR` as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and `ΔR`, as well as **partial correlations** between drift and `abs(ΔR)` while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
 
-The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with `DeltaR`.
+The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with `ΔR`.
 
 ### Extreme cases
 
