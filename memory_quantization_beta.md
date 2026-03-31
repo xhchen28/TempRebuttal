@@ -55,9 +55,7 @@ Our 4-bit RSQ-IP is **not a floating-point format** (i.e., neither e2m1 nor e3m0
 - 1-bit sign  
 - 3-bit index into an 8-level magnitude codebook
 
-This is a codebook-based scalar quantization scheme. After normalization and random rotation, each coordinate satisfies $u_j^2 \sim \mathrm{Beta}(1/2, (m-1)/2)$, so $|u_j|$ follows a non-uniform distribution concentrated near zero.
-
-We therefore design the quantizer in a **data-independent** way: we sample $g \sim \mathcal{N}(0, I_m)$, normalize $u = g / \|g\|_2$, collect $|u_j|$, and apply **Lloyd–Max quantization** to obtain 8 reconstruction levels that minimize MSE.
+This is a codebook-based scalar quantization scheme. After normalization and random rotation, each coordinate satisfies $u_j^2 \sim \mathrm{Beta}(1/2, (m-1)/2)$, so $|u_j|$ follows a non-uniform distribution concentrated near zero. We therefore design the quantizer in a **data-independent** way: we sample $g \sim \mathcal{N}(0, I_m)$, normalize $u = g / \|g\|_2$, collect $|u_j|$, and apply **Lloyd–Max quantization** to obtain 8 reconstruction levels that minimize MSE.
 
 **Why not FP4?**  
 FP4 formats allocate precision based on exponent ranges, which does not match this distribution. In contrast, Lloyd–Max directly adapts to the actual shape of the data, leading to lower quantization error.
@@ -67,9 +65,9 @@ FP4 formats allocate precision based on exponent ranges, which does not match th
 
 We construct the codebook in a **data-independent** manner:
 
-1. Sample \(g \sim \mathcal{N}(0, I_m)\)
-2. Normalize \(u = g / \|g\|_2\), which yields points uniformly distributed on the sphere
-3. Collect samples of \(|u_j|\)
+1. Sample `g ~ N(0, I_m)`.
+2. Normalize `u = g / ||g||_2`, which yields points uniformly distributed on the sphere.
+3. Collect samples of `|u_j|`.
 4. Run **Lloyd–Max scalar quantization** with 8 bins
 
 We sample **10M** points from this theoretical distribution and obtain the following codebook:
@@ -82,7 +80,7 @@ We sample **10M** points from this theoretical distribution and obtain the follo
 
 ### Encoding / decoding
 
-- **Encoding:** use `torch.bucketize` on \(|u_j|\) to get a 3-bit bin index
+- **Encoding:** use `torch.bucketize` on `|u_j|` to get a 3-bit bin index
 - **Decoding:** map the index to its corresponding reconstruction center
 
 This procedure is fixed at initialization and shared across all layers and dimensions. It depends only on the block dimension \(m\), not on any model or dataset.
