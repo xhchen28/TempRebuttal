@@ -146,14 +146,14 @@ We compare three codebooks:
 | Empirical (data-optimal) | 0.000804 | 0% |
 | Uniform | 0.001626 | +102% |
 
-We note that the Beta prior serves as a design guide for a universal, data-independent codebook. The key property SRHT reliably induces is the shape of the distribution (right-skewed, concentrated near zero), which is sufficient for near-optimal 3-bit quantization. We will include this analysis and Figure xxx  in the revised appendix.
+The Beta prior is used to capture the **shape** of the distribution rather than exact per-layer parameters. Empirically, SRHT consistently induces a right-skewed, near-zero–concentrated distribution (Fig. below), which is sufficient for quantizer design.
 
 ![SRHT Beta validation](./figures/beta_validation.png).
-### Interpretation
 
-The practical gap between the theory-based codebook and the data-optimal codebook is only **2.5%**, while a naive uniform quantizer is much worse. This shows that:
-- the Beta prior is a good empirical fit in the layers that matter most,
-- and even where it is imperfect, it is still sufficient for **near-optimal 3-bit quantization**.
-- 
-The goal of the prior is not to perfectly match every layer, but to capture the right shape (right-skewed, near zero). SRHT consistently provides this, which is enough to build a **robust, data-independent codebook** without per-model tuning.
+In practice, the theory-based codebook is only **2.5% worse** than the data-optimal one, while a uniform baseline is over **2× worse**. 
+
+This shows that matching the exact distribution is unnecessary—capturing the correct shape already yields **near-optimal 3-bit quantization** without any data-dependent tuning.
+
+
+
 
