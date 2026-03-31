@@ -53,13 +53,11 @@ In other words, the 4-bit Key cache is not an overhead—it is exactly what make
 
 Our 4-bit RSQ-IP is **not a floating-point format** (i.e., neither e2m1 nor e3m0). Each coordinate is represented by:
 - 1-bit sign  
-- 3-bit index into an 8-level magnitude codebook  
+- 3-bit index into an 8-level magnitude codebook
 
-This is a standard **codebook-based scalar quantization**, not a floating-point encoding.
+This is a codebook-based scalar quantization scheme. After normalization and random rotation, each coordinate satisfies $u_j^2 \sim \mathrm{Beta}(1/2, (m-1)/2)$, so $|u_j|$ follows a non-uniform distribution concentrated near zero.
 
-After normalization and rotation, each block direction lies on the unit sphere, and the coordinate magnitude follows a non-uniform, near-zero–concentrated distribution (approximately Beta-shaped). 
-
-We design the codebook **once, in a data-independent way**: we sample Gaussian vectors, normalize them to the sphere, collect coordinate magnitudes, and run Lloyd–Max quantization to obtain 8 reconstruction levels that minimize MSE.
+We therefore design the quantizer in a **data-independent** way: we sample $g \sim \mathcal{N}(0, I_m)$, normalize $u = g / \|g\|_2$, collect $|u_j|$, and apply **Lloyd–Max quantization** to obtain 8 reconstruction levels that minimize MSE.
 
 **Why not FP4?**  
 FP4 formats allocate precision based on exponent ranges, which does not match this distribution. In contrast, Lloyd–Max directly adapts to the actual shape of the data, leading to lower quantization error.
