@@ -6,7 +6,6 @@ The original submission did not include several recent KV-cache retrieval baseli
 
 All methods are evaluated on the same platform whenever possible. We aim to keep comparisons fair by aligning the *effective retrieval budget* rather than forcing identical hyperparameters. Concretely, we use a budget of ~420 tokens for LongBench-v2 / GPQA and ~2048 tokens for RULER. 
 
-We follow standard evaluation settings: sampling (temperature=0.1) for LongBench-v2 and greedy decoding for RULER. Due to the model constraint (`max_model_len=40960` for Qwen3-8B), we evaluate longer contexts using YaRN for RULER and disable it for LongBench-v2 to remain consistent with prior work.
 
 ## 2. Baseline configurations (summary)
 
@@ -159,12 +158,5 @@ ParisKV is faster than all compared baselines except ShadowKV. Although ShadowKV
 > We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. The optimized Flash-TopK-Attention kernel described in the paper has not been publicly released, making a fair efficiency comparison infeasible.
 ---
 
-## 5. Interpretation
-
-These comparisons support three conclusions:
-
-1. **Accuracy:** ParisKV consistently matches or approaches full attention and outperforms prior retrieval-based methods.
-2. **Long-context robustness:** ParisKV remains strong on both LongBench-v2 and RULER, while several baselines degrade more sharply.
-3. **Scalability:** Under large batch sizes or longer contexts, ParisKV remains stable while prior methods often become CPU-bound, unsupported, or OOM.
 
 Overall, ParisKV provides a strong accuracy–efficiency tradeoff under comparable retrieval budgets.
