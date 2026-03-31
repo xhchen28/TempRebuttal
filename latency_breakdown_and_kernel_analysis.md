@@ -57,10 +57,7 @@ Table 1 reports the per-layer decode latency breakdown at **BS=1, 128K context**
 
 ### 2.1 Avoiding CPU-side retrieval and synchronization
 
-A key difference is that **ParisKV keeps the entire retrieval pipeline on GPU**, while both MagicPIG and PQCache involve substantial CPU-side operations.
-
-- **MagicPIG** performs hash-table traversal and sparse attention on CPU, which becomes the dominant bottleneck.
-- **PQCache** performs CPU-side KV lookup and bulk CPU→GPU transfer, which is inherently memory-bandwidth bound and incurs synchronization overhead.
+A key difference is that **ParisKV keeps the entire retrieval pipeline on GPU**, while both MagicPIG and PQCache involve substantial CPU-side operati
 
 In contrast, ParisKV:
 
