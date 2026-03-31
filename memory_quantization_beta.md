@@ -51,27 +51,19 @@ In other words, the 4-bit Key cache is not an overhead—it is exactly what make
 **Reviewer concern.**  
 “In RSQ-IP, the 4-bit quantization is unclear; Appendix B2.2.2 says 1-bit sign + 3-bit digits, but it is not clear whether this is e2m1 or e3m0, which is not reproducible.”
 
-### Main clarification
+Our 4-bit RSQ-IP is **not a floating-point format** (i.e., neither e2m1 nor e3m0). Each coordinate is represented by:
+- 1-bit sign  
+- 3-bit index into an 8-level magnitude codebook  
 
-Our 4-bit RSQ-IP is **not a floating-point format**. It is neither **e2m1** nor **e3m0**.
+This is a standard **codebook-based scalar quantization**, not a floating-point encoding.
 
-Each coordinate is represented as:
-- **1-bit sign**
-- **3-bit magnitude index** into an 8-entry codebook
+After normalization and rotation, each block direction lies on the unit sphere, and the coordinate magnitude follows a non-uniform, near-zero–concentrated distribution (approximately Beta-shaped). 
 
-So this is a **codebook-based scalar quantization scheme**, not FP4.
+We design the codebook **once, in a data-independent way**: we sample Gaussian vectors, normalize them to the sphere, collect coordinate magnitudes, and run Lloyd–Max quantization to obtain 8 reconstruction levels that minimize MSE.
 
-### Why this design
+**Why not FP4?**  
+FP4 formats allocate precision based on exponent ranges, which does not match this distribution. In contrast, Lloyd–Max directly adapts to the actual shape of the data, leading to lower quantization error.
 
-After normalization and SRHT/random rotation, a block direction vector lies on the unit sphere. For a coordinate of a uniformly distributed point on the sphere:
-
-\[
-u_j^2 \sim \mathrm{Beta}\left(\frac{1}{2}, \frac{m-1}{2}\right).
-\]
-
-Hence, \(|u_j|\) has a **non-uniform distribution concentrated near zero**.
-
-Standard FP4 formats allocate precision according to exponent ranges, not according to the true data distribution of \(|u_j|\). In our setting, that mismatch increases quantization error. Lloyd–Max quantization is better aligned with the actual coordinate distribution and therefore achieves lower error.
 
 ### Codebook construction
 
@@ -96,17 +88,6 @@ We sample **10M** points from this theoretical distribution and obtain the follo
 - **Decoding:** map the index to its corresponding reconstruction center
 
 This procedure is fixed at initialization and shared across all layers and dimensions. It depends only on the block dimension \(m\), not on any model or dataset.
-
-### Reproducibility
-
-In the revision, we will:
-- replace the ambiguous phrase “1-bit sign, 3-bit digits” with  
-  **“1-bit sign + 3-bit Lloyd–Max codebook index”**
-- add the exact codebook construction procedure
-- release the codebook generation script
-- include full hardware / software context
-
----
 
 
 ## 3. Empirical Validation of the SRHT-Induced Beta Prior
