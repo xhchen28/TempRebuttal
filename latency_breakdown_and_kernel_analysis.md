@@ -1,12 +1,5 @@
 # Latency Breakdown and Kernel Analysis
 
-## Reviewer Concern
-
-> The source of the latency gap between ParisKV and MagicPIG / PQCache is not fully explained. Is it due to needing to run the retrieval lookup CPU-side? Are some of the speedups due to other system/kernel improvements? It would be useful to get a breakdown of the runtime for this, given that the overhead is so large.
-
-We thank the reviewer for this insightful question.  
-We agree that the source of the latency gap should be clearly explained.
-
 Our analysis shows that the performance gap mainly comes from two factors:
 
 1. **ParisKV avoids CPU-side retrieval and synchronization**, while MagicPIG and PQCache both incur substantial CPU-side overhead.
@@ -57,12 +50,6 @@ Table 1 reports the per-layer decode latency breakdown at **BS=1, 128K context**
   - retrieval on GPU: `0.549 ms`
   - sparse KV fetch: `0.097 ms`
   - attention: `0.066 ms`
-
-Thus, the latency gap is not explained by a single kernel alone. It is mainly due to:
-
-- removing CPU-side retrieval / synchronization,
-- avoiding bulk CPU→GPU transfer,
-- and using a GPU-native retrieval pipeline.
 
 ---
 
@@ -175,44 +162,4 @@ The fused reranking kernel operates on **4-bit packed representations** (`64 B/t
 UVA-based sparse gather avoids the standard bulk CPU→GPU transfer path and keeps fetch cost small even at long context.
 
 ---
-
-## 4. Summary
-
-The latency gap between ParisKV and MagicPIG / PQCache is primarily explained by:
-
-1. **No CPU-side retrieval or sparse attention**
-   - MagicPIG is bottlenecked by CPU-side hash traversal and sparse attention.
-   - PQCache is bottlenecked by CPU KV lookup and bulk transfer.
-
-2. **No bulk CPU→GPU movement of the full candidate set**
-   - ParisKV only fetches the final top-k KV vectors via UVA.
-
-3. **GPU-native retrieval path**
-   - bitset-based candidate selection,
-   - GPU-side coarse retrieval,
-   - fused 4-bit reranking.
-
-4. **Optimized CUDA kernels across all stages**
-   - collision: up to **9000×**
-   - bucket top-k: up to **9.39×**
-   - fused rerank: about **3–4×**
-   - UVA fetch: about **3–4×**
-
-Overall, the performance gains come from **both**:
-- a fundamentally more GPU-friendly retrieval design, and
-- highly optimized GPU kernels across all stages.
-- 
-
-## Reviewer Concern
-
-> - Not the first to tackle the drift issue with KV retrieval methods: [1] updates centroids iteratively as more KV entries are added, [2] mitigates drift by using a windowed RoPE method, etc. (although the projection method is still a unique contribution)
-  
-  Thank you for pointing us to A2ATS and Multipole Attention. We agree that distribution mismatch/drift in long-context retrieval has also been discussed in prior work, and we will expand the related-work discussion. However, these methods target different failure modes and use different mechanisms from ParisKV.
-  
-A2ATS focuses on RoPE-induced codebook mismatch, i.e., post-PE keys at different positions are hard to quantize with a shared codebook. It addresses this with WRoPE and query-aware VQ, which still rely on learned, data-dependent codebooks/statistics. This differs from our focus on decode-time centroid staleness, where centroids fit on prefill keys become mismatched as decode keys accumulate. In addition, A2ATS still relies on learned codebooks, and its efficiency advantages may depend on the serving regime; for example, the paper reports throughput that is below full attention at small batch sizes (≤5). By contrast, ParisKV maintains near-FlashAttention speed at batch size 1 and exceeds full attention throughput at larger batch sizes.
-
-Multipole Attention is closer to our setting, but it maintains robustness through online blockwise reclustering/refinement during decoding, which introduces additional online maintenance. In contrast, ParisKV avoids centroid drift by construction: after normalization and shared random rotation, retrieval operates in a stable approximately isotropic space with data-independent analytic centroids. Hence, no centroid relearning or online reclustering is needed; decoding only appends lightweight metadata.
-
-More precisely, our novelty lies not in being the first to observe drift itself, but in introducing a data-independent, drift-robust centroid construction that naturally integrates with GPU-native coarse-to-fine retrieval, adapts well to dynamic-context decoding scenarios, and substantially improves token generation throughput over prior methods, thereby enhancing practical usability.
-
 
