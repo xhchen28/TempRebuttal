@@ -5,15 +5,11 @@
 **Reviewer concern.**  
 “4-bit quant for kv-cache footprint is still a costly burden; please show the cost with request increase and give a comprehensive memory usage analysis.”
 
-### Main takeaway
+We do not find the 4-bit Key cache to be a burden in practice. In fact, it is the main reason ParisKV is memory-efficient.
 
-The 4-bit Key cache is **not** a costly burden. It is the main source of memory savings in ParisKV.
+The key difference from full attention is that we only store **Keys (not Values)** and store them in **4-bit precision**. As a result, the per-token memory drops from 4096B (bf16 K+V) to 512B for the Key cache. Even including all additional components, the total memory is about 556.5B per token, which is only ~13.6% of full KV.
 
-Compared to full attention (bf16 K+V), ParisKV stores:
-- only **Keys** (not Values),
-- at **4-bit precision**.
-
-This reduces the per-token storage cost from **4096B** to **512B**, i.e., **12.5%** of full attention. Including all components, ParisKV uses about **556.5B/token**, i.e., **13.6%** of full KV memory.
+In other words, the 4-bit Key cache is not an overhead—it is precisely what makes the large memory reduction possible.
 
 ### Per-token memory accounting
 
