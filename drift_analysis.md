@@ -1,12 +1,3 @@
-### W2. Fine-grained analysis of drift across layers and heads
-
-We thank the reviewer for this suggestion. We agree that head- and layer-level analysis is important for understanding robustness under key-cache distribution shift. In the revision, we add a fine-grained study at full **layer × head** resolution over all attention heads.
-
-We define the recall change for each `(layer, head)` as
-\[
-\Delta R = R_{\mathrm{final}} - R_{\mathrm{init}},
-\]
-where \(R_{\mathrm{init}}\) is the recall@k computed when retrieval is restricted to **prefill keys only**, and \(R_{\mathrm{final}}\) is the recall@k computed on the full retrieval pool containing **prefill + decode keys**.
 
 ### W2. Fine-grained analysis of drift across layers and heads
 
