@@ -2,37 +2,11 @@
 
 ## 1. Scope and fairness protocol
 
-**Reviewer concern.**  
-The original submission did not include several recent long-context KV-cache baselines on the same platform, such as RetroInfer, ShadowKV, RetrievalAttention, and SOCKET.
+The original submission did not include several recent KV-cache retrieval baselines (e.g., RetroInfer, ShadowKV, SOCKET). We expand our comparison to cover these methods, along with Quest, Twilight, FreeKV, MagicPIG, and PQCache. RetrievalAttention is not included since it is not publicly available.
 
-### Baselines included here
+All methods are evaluated on the same platform whenever possible. We aim to keep comparisons fair by aligning the *effective retrieval budget* rather than forcing identical hyperparameters. Concretely, we use a budget of ~420 tokens for LongBench-v2 / GPQA and ~2048 tokens for RULER. 
 
-We expand the comparison to include:
-- RetroInfer
-- ShadowKV
-- SOCKET
-- Quest
-- Twilight
-- FreeKV
-- MagicPIG
-- PQCache
-
-**RetrievalAttention** is not included because it is not publicly available.
-
-### Common evaluation protocol
-
-We evaluate all methods on the same platform whenever possible and align retrieval budgets approximately:
-
-- **LongBench-v2:** sampling decoding, temperature = 0.1
-- **RULER:** greedy decoding
-- **LongBench-v2 / GPQA target budget:** ~420 tokens
-- **RULER target budget:** ~2048 tokens
-
-Model details:
-- Qwen3-8B has `max_model_len=40960`
-The goal is not to force identical hyperparameters across methods, but to match their **effective retrieval budget** as closely as possible.
----
-
+We follow standard evaluation settings: sampling (temperature=0.1) for LongBench-v2 and greedy decoding for RULER. Due to the model constraint (`max_model_len=40960` for Qwen3-8B), we evaluate longer contexts using YaRN for RULER and disable it for LongBench-v2 to remain consistent with prior work.
 
 ## 2. Baseline configurations (summary)
 
