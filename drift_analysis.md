@@ -5,7 +5,7 @@ We thank the reviewer for this suggestion. We agree that head- and layer-level a
 
 We define the recall change for each `(layer, head)` as:
 
-`DeltaR = R_final - R_init`
+`ΔR = R_final - R_init`
 
 where `R_init` is the recall@k computed when retrieval is restricted to **prefill keys only**, and `R_final` is the recall@k computed on the full retrieval pool containing **prefill + decode keys**.
 
@@ -18,11 +18,11 @@ Since cluster indices are permutation-invariant, we first align the two codebook
 `norm_drift_keynorm = mean_l2_drift / mean_key_norm`, for `mean_key_norm > 0`
 
 For each `(layer, head)`, we compute:
-1. `DeltaR`, the recall change from prefill-only retrieval to full retrieval;
+1. `ΔR`, the recall change from prefill-only retrieval to full retrieval;
 2. `normalized drift`, i.e., centroid displacement divided by mean key norm.
 
 Specifically, for each `(layer, head)`, we:
-- train PQ-style codebooks on prefill keys and compute recall@k on retrieval pools restricted to **prefill only** and **prefill + decode**, yielding per-cell `DeltaR`;
+- train PQ-style codebooks on prefill keys and compute recall@k on retrieval pools restricted to **prefill only** and **prefill + decode**, yielding per-cell `ΔR`;
 - train codebooks separately on prefill keys and all keys, align centroids with the **Hungarian algorithm** to account for arbitrary cluster-index permutations, and measure the mean L2 displacement between matched centroids;
 - normalize this drift by the mean L2 norm of keys for cross-head comparability.
 
@@ -83,3 +83,9 @@ Overall, these results suggest that drift is highly non-uniform across layers an
 | 33 | 0.67376 | 0.72157 | 0.69012 | 0.64887 | 0.71054 | 0.62729 | 0.43922 | 0.72381 |
 | 34 | 0.71657 | 0.60707 | 0.58990 | 0.35042 | 0.40477 | 0.39450 | 0.42112 | 0.58938 |
 | 35 | 0.36939 | 0.33579 | 0.46993 | 0.33705 | 0.33054 | 0.37359 | 0.33982 | 0.34104 |
+
+
+
+
+
+
