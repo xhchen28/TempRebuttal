@@ -28,11 +28,15 @@ Specifically, for each `(layer, head)`, we:
 
 We visualize normalized drift and `ΔR` as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and `ΔR`, as well as **partial correlations** between drift and `abs(ΔR)` while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/xhchen28/TempRebuttal/master/figures/drift_recall_hotmap.png" alt="Drift and ΔR heatmap" width="700">
+</p>
+
 The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with `ΔR`.
 
 ### Extreme cases
 
-| Case | Layer | Head | norm_drift_keynorm | \(\Delta\)Recall |
+| Case | Layer | Head | norm_drift_keynorm | `ΔR` |
 |------|------:|-----:|-------------------:|-----------------:|
 | Minimum normalized drift | 0 | 1 | 0.1532 | -0.1040 |
 | Maximum normalized drift | 5 | 2 | 0.7502 | -0.1585 |
@@ -41,9 +45,11 @@ We further note:
 - **L5 H2** has the largest drift under both **normalized drift** and **absolute L2 drift**;
 - the head with the **smallest normalized drift** is **L0 H1**, which is **not** the same head with the smallest absolute L2 drift (**L2 H6**).
 
-Overall, these results suggest that drift is highly non-uniform across layers and heads. However, the weak correlation between normalized drift and \(\Delta\)recall indicates that **distribution drift alone does not fully determine retrieval quality degradation**. This supports our claim that robustness requires not only mitigating centroid staleness, but also maintaining strong retrieval quality under shifting decode-time key distributions.
+Overall, these results suggest that drift is highly non-uniform across layers and heads. However, the weak correlation between normalized drift and Δrecall indicates that **distribution drift alone does not fully determine retrieval quality degradation**. This supports our claim that robustness requires not only mitigating centroid staleness, but also maintaining strong retrieval quality under shifting decode-time key distributions.
 
-### Normalized drift heatmap values (\(\mathrm{norm\_drift\_keynorm}\))
+
+
+### Normalized drift heatmap values (`norm_drift_keynorm`)
 
 | Layer | H0 | H1 | H2 | H3 | H4 | H5 | H6 | H7 |
 |------:|------:|------:|------:|------:|------:|------:|------:|------:|
