@@ -8,29 +8,36 @@ We define the recall change for each `(layer, head)` as
 \]
 where \(R_{\mathrm{init}}\) is the recall@k computed when retrieval is restricted to **prefill keys only**, and \(R_{\mathrm{final}}\) is the recall@k computed on the full retrieval pool containing **prefill + decode keys**.
 
-To quantify centroid drift, for each `(layer, head)` we train PQ-style codebooks on (i) prefill keys and (ii) all keys (prefill + decode). Since cluster indices are permutation-invariant, we first align the two codebooks using the **Hungarian algorithm**, and then measure the mean L2 displacement between matched centroid pairs. To make drift comparable across heads with different key magnitudes, we normalize it by the mean L2 norm of keys:
-\[
-\boxed{
-\mathrm{norm\_drift\_keynorm}
-=
-\frac{\mathrm{mean\_l2\_drift}}{\mathrm{mean\_key\_norm}}
-\qquad
-(\mathrm{mean\_key\_norm} > 0)
-}
-\]
+### W2. Fine-grained analysis of drift across layers and heads
+
+We thank the reviewer for this suggestion. We agree that head- and layer-level analysis is important for understanding robustness under key-cache distribution shift. In the revision, we add a fine-grained study at full **layer × head** resolution over all attention heads.
+
+We define the recall change for each `(layer, head)` as:
+
+`DeltaR = R_final - R_init`
+
+where `R_init` is the recall@k computed when retrieval is restricted to **prefill keys only**, and `R_final` is the recall@k computed on the full retrieval pool containing **prefill + decode keys**.
+
+To quantify centroid drift, for each `(layer, head)` we train PQ-style codebooks on:
+- prefill keys, and
+- all keys (`prefill + decode`).
+
+Since cluster indices are permutation-invariant, we first align the two codebooks using the **Hungarian algorithm**, and then measure the mean L2 displacement between matched centroid pairs. To make drift comparable across heads with different key magnitudes, we normalize it by the mean L2 norm of keys:
+
+`norm_drift_keynorm = mean_l2_drift / mean_key_norm`, for `mean_key_norm > 0`
 
 For each `(layer, head)`, we compute:
-1. **\(\Delta R\)**, the recall change from prefill-only retrieval to full retrieval;
-2. **normalized drift**, i.e., centroid displacement divided by mean key norm.
+1. `DeltaR`, the recall change from prefill-only retrieval to full retrieval;
+2. `normalized drift`, i.e., centroid displacement divided by mean key norm.
 
 Specifically, for each `(layer, head)`, we:
-- train PQ-style codebooks on prefill keys and compute recall@k on retrieval pools restricted to **prefill only** and **prefill + decode**, yielding per-cell \(\Delta\)recall;
+- train PQ-style codebooks on prefill keys and compute recall@k on retrieval pools restricted to **prefill only** and **prefill + decode**, yielding per-cell `DeltaR`;
 - train codebooks separately on prefill keys and all keys, align centroids with the **Hungarian algorithm** to account for arbitrary cluster-index permutations, and measure the mean L2 displacement between matched centroids;
 - normalize this drift by the mean L2 norm of keys for cross-head comparability.
 
-We visualize normalized drift and \(\Delta\)recall as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and \(\Delta\)recall, as well as **partial correlations** between drift and \(|\Delta\)recall\(|\) while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
+We visualize normalized drift and `DeltaR` as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and `DeltaR`, as well as **partial correlations** between drift and `abs(DeltaR)` while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
 
-The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with \(\Delta\)recall.
+The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with `DeltaR`.
 
 ### Extreme cases
 
