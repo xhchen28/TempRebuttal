@@ -75,6 +75,8 @@ We summarize the key configurations below. All methods are tuned to match **comp
 | Twilight | 20.72 | 20.00 | 14.71 | 26.19 | 23.44 | 15.79 | 24.24 |
 | **ParisKV** | **28.43** | **37.29** | **25.62** | **28.41** | **25.20** | **31.11** | **30.16** |
 
+
+
 ## RULER (full breakdown)
 
 <table>
@@ -132,21 +134,26 @@ Notation:
 
 ### Decode latency (ms/token, bs=1)
 
-| Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 128K | 20.78 | 1106.14 | 29.14 | 24.42 | 23.13 | 225.00 | 120.57 | 243.91 | 21.78 |
-| 256K | 46.30 | OOM | 37.53 | **32.16** | 33.29 | OOM | 230.24 | 754.76 | NA |
-| 384K | OOM | OOM | 33.31 | 37.19 | OOM | OOM | 487.77 | 1207.81 | NA |
+| Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV | ShadowKV|
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 128K | 20.78 | 1106.14 | 29.14 | 24.42 | 23.13 | 225.00 | 120.57 | 243.91 | 21.78 | 53.30|
+| 256K | 46.30 | OOM | 37.53 | **32.16** | 33.29 | OOM | 230.24 | 754.76 | NA |150.98|
+| 384K | OOM | OOM | 33.31 | 37.19 | OOM | OOM | 487.77 | 1207.81 | NA |318.14|
+
+
 
 ### Prefill latency (TTFT, seconds)
 
 We report prefill latency (TTFT) as a function of sequence length.
 
-| Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 128K | 37.28 | 34.56 | 35.74 | 43.00 | 33.30 | 38.29 | 55.10 | 25.50 | 43.83 |
-| 256K | 117.71 | OOM | 126.71 | 139.50 | 116.20 | OOM | 141.10 | 104.70 | OOM |
-| 384K | OOM | OOM | 274.85 | 290.40 | OOM | OOM | 272.80 | 238.80 | OOM |
+| Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV |ShadowKV|
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 128K | 37.28 | 34.56 | 35.74 | 43.00 | 33.30 | 38.29 | 55.10 | 25.50 | 43.83 |51.77 |
+| 256K | 117.71 | OOM | 126.71 | 139.50 | 116.20 | OOM | 141.10 | 104.70 | OOM |152.12|
+| 384K | OOM | OOM | 274.85 | 290.40 | OOM | OOM | 272.80 | 238.80 | OOM |309.26|
+
+ParisKV is faster than all compared baselines except ShadowKV. Although ShadowKV achieves higher speed, its accuracy is substantially lower than ParisKV. Moreover, ShadowKV does not support long-form generation efficiently, because all tokens generated during decoding are still included in attention, making its decode-time computation essentially equivalent to full attention. Under this setting, decode-time speed also degrades because the batch size cannot be scaled up effectively. Moreover, ShadowKV exhibits higher prefill latency than the other baselines.
+
 
 > **Note on Twilight.**  
 > We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. The optimized Flash-TopK-Attention kernel described in the paper has not been publicly released, making a fair efficiency comparison infeasible.
