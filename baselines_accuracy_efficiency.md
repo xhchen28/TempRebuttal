@@ -2,9 +2,7 @@
 
 ## 1. Scope and fairness protocol
 
-The original submission did not include several recent KV-cache retrieval baselines (e.g., RetroInfer, ShadowKV, SOCKET). We expand our comparison to cover these methods, along with Quest, Twilight, FreeKV, MagicPIG, and PQCache. RetrievalAttention is not included since it is not publicly available.
-
-All methods are evaluated on the same platform whenever possible. We aim to keep comparisons fair by aligning the *effective retrieval budget* rather than forcing identical hyperparameters. Concretely, we use a budget of ~420 tokens for LongBench-v2 / GPQA and ~2048 tokens for RULER. 
+All methods are evaluated on the same platform whenever possible. We aim to keep comparisons fair by aligning the *effective retrieval budget* rather than forcing identical hyperparameters. 
 
 
 ## 2. Baseline configurations (summary)
@@ -22,11 +20,6 @@ We summarize the key configurations below. All methods are tuned to match **comp
 | MagicPIG | LSH (K=10, L=170), dynamic budget | same |
 | PQCache | compress=20%, subspace=2, clusters=64 | same |
 
-**Notes.**
-- For adaptive methods (e.g., Twilight), we tune parameters (top-p) to match the **average retrieval budget** of ParisKV (~420 tokens).
-- Minor implementation-specific parameters (e.g., buffer size, page details) follow official codebases and are omitted for brevity.
-
----
 
 ## 3. Accuracy results
 
@@ -155,8 +148,6 @@ ParisKV is faster than all compared baselines except ShadowKV. Although ShadowKV
 
 
 > **Note on Twilight.**  
-> We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. The optimized Flash-TopK-Attention kernel described in the paper has not been publicly released, making a fair efficiency comparison infeasible.
----
+> We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. 
 
 
-Overall, ParisKV provides a strong accuracy–efficiency tradeoff under comparable retrieval budgets.
