@@ -88,9 +88,6 @@ This procedure is fixed at initialization and shared across all layers and dimen
 
 ## 3. Empirical Validation of the SRHT-Induced Beta Prior
 
-**Reviewer concern.**  
-“Can you provide empirical evidence that SRHT induces the Beta-like prior in Proposition 4.1?”
-
 ### Setup
 
 We extract KV tensors from Qwen3-8B, apply the same SRHT used in our method (seed=42), split into 8D blocks, normalize, and fit Beta distributions to $(u_j)^2$ via MLE.
