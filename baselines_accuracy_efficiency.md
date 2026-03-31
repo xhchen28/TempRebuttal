@@ -125,7 +125,7 @@ No sink/local split:
 | Model | Overall | Short Easy | Short Hard | Medium Easy | Medium Hard | Long Easy | Long Hard |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **Qwen3-4B** | | | | | | | |
-| Qwen3-4B Full | 25.84 | 27.12 | 16.53 | 36.36 | 25.20 | 26.67 | 28.57 |
+| Full | 25.84 | 27.12 | 16.53 | 36.36 | 25.20 | 26.67 | 28.57 |
 | PQCache | 17.91 | 16.95 | 19.00 | 13.60 | 19.00 | 20.00 | 19.05 |
 | MagicPIG | 16.70 | 18.64 | 10.74 | 14.77 | 20.47 | 28.89 | 12.70 |
 | ShadowKV | 16.30 | 13.60 | 14.80 | 22.20 | 9.90 | 21.30 | 19.00 |
@@ -139,7 +139,7 @@ No sink/local split:
 | Model | Overall | Short Easy | Short Hard | Medium Easy | Medium Hard | Long Easy | Long Hard |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **Qwen3-8B** | | | | | | | |
-| Qwen3-8B Full | 33.59 | 50.85 | 34.71 | 32.95 | 25.98 | 37.78 | 28.57 |
+| Full | 33.59 | 50.85 | 34.71 | 32.95 | 25.98 | 37.78 | 28.57 |
 | PQCache | 25.50 | 23.70 | 31.60 | 28.20 | 24.00 | 25.00 | 20.00 |
 | MagicPIG | 10.34 | 8.47 | 15.70 | 7.95 | 7.87 | 13.33 | 7.94 |
 | ShadowKV | 15.90 | 40.70 | 23.10 | 6.80 | 13.40 | 6.70 | 3.20 |
@@ -153,7 +153,7 @@ No sink/local split:
 | Model | Overall | Short Easy | Short Hard | Medium Easy | Medium Hard | Long Easy | Long Hard |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | **DS-R1-8B** | | | | | | | |
-| DS-R1-8B Full | 13.12 | 18.64 | 15.70 | 12.50 | 8.66 | 11.11 | 14.29 |
+| Full | 13.12 | 18.64 | 15.70 | 12.50 | 8.66 | 11.11 | 14.29 |
 | PQCache | 19.90 | 18.60 | 21.50 | 21.60 | 22.20 | 15.60 | 14.30 |
 | MagicPIG | 13.92 | 15.25 | 11.57 | 11.36 | 14.17 | 17.78 | 17.46 |
 | ShadowKV | 14.51 | 18.60 | 23.10 | 13.60 | 14.20 | 2.20 | 4.80 |
@@ -195,17 +195,12 @@ No sink/local split:
     <tr><td style="text-align:left;">Quest</td><td>99.00</td><td>98.96</td><td>94.79</td><td>64.58</td><td>83.59</td><td>94.79</td><td>62.85</td><td>79.17</td><td>44.79</td><td>70.83</td><td>79.34</td></tr>
   </tbody>
 </table>
+
 ### GPQA-diamond
 
-| Method | Score |
-|---|---:|
-| Qwen3-4B | 64.14 |
-| Quest | 38.40 |
-| RetroInfer | 38.90 |
-| FreeKV | 58.16 |
-| MagicPig++ | 32.32 |
-| PQCache | 38.38 |
-| ParisKV | **72.22** |
+| Method | Qwen3-4B | Quest | RetroInfer | FreeKV | MagicPig++ | PQCache | ParisKV |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Score | 64.14 | 38.40 | 38.90 | 58.16 | 32.32 | 38.38 | **72.22** |
 
 ---
 
