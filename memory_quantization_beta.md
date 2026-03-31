@@ -25,34 +25,24 @@ Thus, the 4-bit Key cache reduces storage to **1/8 of full attention**:
 
 ### Scaling with concurrent requests
 
-We evaluate Qwen3-8B at 32K context length (36 layers, 8 KV heads, head_dim=128) and vary batch size from 1 to 64.
+We measure KV cache memory on Qwen3-8B (32K context) while increasing the number of concurrent requests (batch size).
 
-| Batch Size | Full Attention (GB) | ParisKV Total (GB) | Local-sink (GB) | Top-k (GB) | 4-bit Key (GB) | Savings |
-|---|---:|---:|---:|---:|---:|---:|
-| 1  | 4.50  | 0.61  | 0.04 | 0.01 | 0.56 | 86.4% |
-| 4  | 18.00 | 2.45  | 0.14 | 0.05 | 2.25 | 86.4% |
-| 8  | 36.00 | 4.89  | 0.28 | 0.11 | 4.50 | 86.4% |
-| 16 | 72.00 | 9.78  | 0.56 | 0.22 | 9.00 | 86.4% |
-| 32 | 144.00 | 19.56 | 1.13 | 0.44 | 18.00 | 86.4% |
-| 64 | 288.00 | 39.13 | 2.25 | 0.88 | 36.00 | 86.4% |
+| Batch | Full (GB) | ParisKV (GB) | Savings |
+|---|---:|---:|---:|
+| 1  | 4.50  | 0.61  | 86.4% |
+| 4  | 18.00 | 2.45  | 86.4% |
+| 8  | 36.00 | 4.89  | 86.4% |
+| 16 | 72.00 | 9.78  | 86.4% |
+| 32 | 144.00 | 19.56 | 86.4% |
+| 64 | 288.00 | 39.13 | 86.4% |
 
-Internal ParisKV breakdown:
-- Local-sink: **5.7%**
-- Top-k working set: **2.2%**
-- 4-bit Key cache: **92.1%**
+The reduction ratio stays essentially constant because both methods scale linearly with sequence length and batch size.
 
-### Interpretation
+In practice, this translates directly into higher serving capacity. On an 80GB A100, full attention already runs out of memory around batch≈16, while ParisKV can still support batch=64, i.e., about 4× more concurrent requests.
 
-- The memory reduction stays at **86.4%** across all batch sizes because both methods scale linearly with the number of requests.
-- On an **80GB A100**, full attention saturates at about **batch=16** (72GB), while ParisKV still fits **batch=64** (39.13GB), enabling **4×** more concurrent requests on the same hardware.
+Looking at the memory breakdown, most of ParisKV’s footprint comes from the 4-bit Key cache. However, this should not be interpreted as a drawback: it still corresponds to only ~12.5% of the per-token cost of full KV storage. Without it, one would either need to store full-precision Keys (much higher memory) or give up scoring long-range tokens entirely.
 
-### Why the 4-bit Key cache is not a burden
-
-Although the 4-bit Key cache accounts for most of ParisKV’s memory, it is still only **12.5%** of the per-token cost of full attention. Without it, one would either:
-- store full bf16 Keys (8× more memory), or
-- lose long-range token scoring altogether.
-
-Therefore, the 4-bit Key cache is the main mechanism that preserves global retrieval quality while keeping memory usage practical.
+In other words, the 4-bit Key cache is not an overhead—it is exactly what makes large-scale memory reduction possible while preserving retrieval quality.
 
 ---
 
