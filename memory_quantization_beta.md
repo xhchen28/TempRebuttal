@@ -108,27 +108,16 @@ In the revision, we will:
 
 ---
 
+
 ## 3. Empirical Validation of the SRHT-Induced Beta Prior
 
 **Reviewer concern.**  
-“Can you provide additional empirical validation that SRHT induces the Beta-like priors assumed in Proposition 4.1?”
+“Can you provide empirical evidence that SRHT induces the Beta-like prior in Proposition 4.1?”
 
 ### Setup
 
-We extract KV cache tensors from **Qwen3-8B**:
-- hidden dimension \(D = 128\)
-- 36 layers
-- 8 KV heads
-- 4096-token input
+We extract KV tensors from Qwen3-8B, apply the same SRHT used in our method (seed=42), split into 8D blocks, normalize, and fit Beta distributions to $(u_j)^2$ via MLE.
 
-We apply the production SRHT rotation:
-- seed = 42
-- 1 round
-
-Then we:
-- partition vectors into \(m=8\)-dimensional blocks,
-- normalize each block to obtain unit directions \(\mathbf{u}_b \in \mathbb{S}^{m-1}\),
-- fit Beta distributions to empirical \((\mathbf{u}_b)_j^2\) via MLE.
 
 ### Finding 1: Beta shape is empirically confirmed
 
@@ -157,14 +146,14 @@ We compare three codebooks:
 | Empirical (data-optimal) | 0.000804 | 0% |
 | Uniform | 0.001626 | +102% |
 
+We note that the Beta prior serves as a design guide for a universal, data-independent codebook. The key property SRHT reliably induces is the shape of the distribution (right-skewed, concentrated near zero), which is sufficient for near-optimal 3-bit quantization. We will include this analysis and Figure xxx  in the revised appendix.
+
+![SRHT Beta validation](./figures/beta_validation.png).
 ### Interpretation
 
 The practical gap between the theory-based codebook and the data-optimal codebook is only **2.5%**, while a naive uniform quantizer is much worse. This shows that:
 - the Beta prior is a good empirical fit in the layers that matter most,
 - and even where it is imperfect, it is still sufficient for **near-optimal 3-bit quantization**.
+- 
+The goal of the prior is not to perfectly match every layer, but to capture the right shape (right-skewed, near zero). SRHT consistently provides this, which is enough to build a **robust, data-independent codebook** without per-model tuning.
 
-In other words, the value of the prior is not that every layer exactly matches the same Beta parameters, but that SRHT reliably induces the right qualitative shape:
-- right-skewed
-- concentrated near zero
-
-This is exactly the property needed to build a **universal, data-independent codebook** without per-model calibration.
