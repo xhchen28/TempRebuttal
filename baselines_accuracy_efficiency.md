@@ -30,91 +30,28 @@ We evaluate all methods on the same platform whenever possible and align retriev
 
 Model details:
 - Qwen3-8B has `max_model_len=40960`
-- We evaluate up to 128K by:
-  - **LongBench-v2:** without YaRN
-  - **RULER:** with YaRN enabled
-
 The goal is not to force identical hyperparameters across methods, but to match their **effective retrieval budget** as closely as possible.
-
 ---
 
-## 2. Baseline configurations
 
-### SOCKET
-- `bucket_K = 8`
-- `bucket_L = 60`
-- `sink = 64`
-- `local = 256`
-- `topk = 100` for LongBench-v2
-- `topk = 2048` for RULER
+## 2. Baseline configurations (summary)
 
-### Twilight
-Twilight uses adaptive top-k via top-p. We choose a setting whose **mean retrieval budget** roughly matches ParisKV:
-- `top-p = 0.3` → meanK = 353
-- `top-p = 0.5` → meanK = 402.4  ✅
-- `top-p = 0.8` → meanK = 671.17
+We summarize the key configurations below. All methods are tuned to match **comparable retrieval budgets** whenever possible.
 
-ParisKV uses `sink=64 + local=256 + topk=100 = 420`, so we use **top-p=0.5** as the fairest comparison.
+| Method | LongBench-v2 / GPQA | RULER |
+|---|---|---|
+| SOCKET | bucket_K=8, bucket_L=60, sink=64, local=256, topk=100 | topk=2048 |
+| Twilight | top-p=0.5 (meanK≈402, matches ~420 budget) | same |
+| RetroInfer | sink=64, local=256, ratio=0.001, clusters=8192 (size≈16) | ratio=0.013 |
+| ShadowKV | local=32, outlier=384, sparse=104 | local=32, outlier=304, sparse=2048 |
+| FreeKV | sink=64, local=256, page=128 (~448 total) | same |
+| Quest | token_budget=420, chunk=16 | token_budget=2048 |
+| MagicPIG | LSH (K=10, L=170), dynamic budget | same |
+| PQCache | compress=20%, subspace=2, clusters=64 | same |
 
-### RetroInfer
-**LongBench-v2**
-- `sink = 64`
-- `local = 256`
-- `retrieval ratio = 0.001`
-- `estimation zone = 0.001`
-- `pages_per_cluster = 2`
-- `buffer_cluster_num = 200`
-- `cluster_num = 8192`
-- effective cluster size ≈ 16, capped at 750 if larger
-
-**RULER**
-- `sink = 64`
-- `local = 256`
-- `retrieval ratio = 0.013`
-- `estimation cluster ratio = 0.001`
-- cluster size = 16, total clusters = 8192
-
-**GPQA-diamond**
-- `retrieval ratio = 0.01`
-- `estimation zone = 0.001`
-- `retrieval_topk = 7`
-- fixed `nprobe = 7`
-
-### ShadowKV
-**LongBench-v2**
-- `local = 32`
-- `outlier = 384`
-- `sparse = 104`
-
-**RULER**
-- `local = 32`
-- `outlier = 304`
-- `sparse = 2048`
-
-### FreeKV
-- `sink = 64`
-- `local = 256`
-- `page = 128`
-- total budget ≈ 448
-
-### Quest
-No sink/local split:
-- LongBench-v2 / GPQA:
-  - `token_budget = 420`
-  - `chunk_size = 16`
-- RULER:
-  - `token_budget = 2048`
-
-### MagicPIG
-- LSH parameters:
-  - `K = 10`
-  - `L = 170`
-- retrieval budget is dynamic and depends on KV length
-
-### PQCache
-- `compress ratio = 20%`
-- `subspace = 2`
-- `cluster_num = 64`
+**Notes.**
+- For adaptive methods (e.g., Twilight), we tune parameters (top-p) to match the **average retrieval budget** of ParisKV (~420 tokens).
+- Minor implementation-specific parameters (e.g., buffer size, page details) follow official codebases and are omitted for brevity.
 
 ---
 
@@ -227,6 +164,18 @@ Notation:
 | 256K | 46.30 | OOM | 37.53 | **32.16** | 33.29 | OOM | 230.24 | 754.76 | NA |
 | 384K | OOM | OOM | 33.31 | 37.19 | OOM | OOM | 487.77 | 1207.81 | NA |
 
+### Prefill latency (TTFT, seconds)
+
+We report prefill latency (TTFT) as a function of sequence length.
+
+| Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 128K | 37.28 | 34.56 | 35.74 | 43.00 | 33.30 | 38.29 | 55.10 | 25.50 | 43.83 |
+| 256K | 117.71 | OOM | 126.71 | 139.50 | 116.20 | OOM | 141.10 | 104.70 | OOM |
+| 384K | OOM | OOM | 274.85 | 290.40 | OOM | OOM | 272.80 | 238.80 | OOM |
+
+> **Note on Twilight.**  
+> We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. The optimized Flash-TopK-Attention kernel described in the paper has not been publicly released, making a fair efficiency comparison infeasible.
 ---
 
 ## 5. Interpretation
