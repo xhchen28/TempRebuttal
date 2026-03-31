@@ -1,0 +1,87 @@
+### W2. Fine-grained analysis of drift across layers and heads
+
+We thank the reviewer for this suggestion. We agree that head- and layer-level analysis is important for understanding robustness under key-cache distribution shift. In the revision, we add a fine-grained study at full **layer × head** resolution over all attention heads.
+
+We define the recall change for each `(layer, head)` as
+\[
+\Delta R = R_{\mathrm{final}} - R_{\mathrm{init}},
+\]
+where \(R_{\mathrm{init}}\) is the recall@k computed when retrieval is restricted to **prefill keys only**, and \(R_{\mathrm{final}}\) is the recall@k computed on the full retrieval pool containing **prefill + decode keys**.
+
+To quantify centroid drift, for each `(layer, head)` we train PQ-style codebooks on (i) prefill keys and (ii) all keys (prefill + decode). Since cluster indices are permutation-invariant, we first align the two codebooks using the **Hungarian algorithm**, and then measure the mean L2 displacement between matched centroid pairs. To make drift comparable across heads with different key magnitudes, we normalize it by the mean L2 norm of keys:
+\[
+\boxed{
+\mathrm{norm\_drift\_keynorm}
+=
+\frac{\mathrm{mean\_l2\_drift}}{\mathrm{mean\_key\_norm}}
+\qquad
+(\mathrm{mean\_key\_norm} > 0)
+}
+\]
+
+For each `(layer, head)`, we compute:
+1. **\(\Delta R\)**, the recall change from prefill-only retrieval to full retrieval;
+2. **normalized drift**, i.e., centroid displacement divided by mean key norm.
+
+Specifically, for each `(layer, head)`, we:
+- train PQ-style codebooks on prefill keys and compute recall@k on retrieval pools restricted to **prefill only** and **prefill + decode**, yielding per-cell \(\Delta\)recall;
+- train codebooks separately on prefill keys and all keys, align centroids with the **Hungarian algorithm** to account for arbitrary cluster-index permutations, and measure the mean L2 displacement between matched centroids;
+- normalize this drift by the mean L2 norm of keys for cross-head comparability.
+
+We visualize normalized drift and \(\Delta\)recall as aligned heatmaps over layers and heads, and report **Pearson/Spearman correlations** between drift and \(\Delta\)recall, as well as **partial correlations** between drift and \(|\Delta\)recall\(|\) while controlling for initial (prefill-only) recall, to disentangle drift effects from baseline recall differences across heads.
+
+The normalized drift varies substantially across heads and layers, ranging from **0.1532** to **0.7502**, consistent with the broad spread observed in the heatmaps and the weak correlation with \(\Delta\)recall.
+
+### Extreme cases
+
+| Case | Layer | Head | norm_drift_keynorm | \(\Delta\)Recall |
+|------|------:|-----:|-------------------:|-----------------:|
+| Minimum normalized drift | 0 | 1 | 0.1532 | -0.1040 |
+| Maximum normalized drift | 5 | 2 | 0.7502 | -0.1585 |
+
+We further note:
+- **L5 H2** has the largest drift under both **normalized drift** and **absolute L2 drift**;
+- the head with the **smallest normalized drift** is **L0 H1**, which is **not** the same head with the smallest absolute L2 drift (**L2 H6**).
+
+Overall, these results suggest that drift is highly non-uniform across layers and heads. However, the weak correlation between normalized drift and \(\Delta\)recall indicates that **distribution drift alone does not fully determine retrieval quality degradation**. This supports our claim that robustness requires not only mitigating centroid staleness, but also maintaining strong retrieval quality under shifting decode-time key distributions.
+
+### Normalized drift heatmap values (\(\mathrm{norm\_drift\_keynorm}\))
+
+| Layer | H0 | H1 | H2 | H3 | H4 | H5 | H6 | H7 |
+|------:|------:|------:|------:|------:|------:|------:|------:|------:|
+| 0  | 0.18184 | 0.15316 | 0.15559 | 0.18549 | 0.16336 | 0.20195 | 0.16457 | 0.15343 |
+| 1  | 0.30216 | 0.20907 | 0.37506 | 0.27208 | 0.26714 | 0.38307 | 0.44000 | 0.30928 |
+| 2  | 0.48198 | 0.33010 | 0.48490 | 0.40718 | 0.46768 | 0.39936 | 0.29259 | 0.54306 |
+| 3  | 0.48173 | 0.62530 | 0.49552 | 0.57593 | 0.55122 | 0.51761 | 0.33666 | 0.35682 |
+| 4  | 0.45494 | 0.38664 | 0.28912 | 0.34836 | 0.31207 | 0.37819 | 0.36010 | 0.39163 |
+| 5  | 0.28407 | 0.34717 | 0.75019 | 0.45128 | 0.29286 | 0.33077 | 0.23190 | 0.33299 |
+| 6  | 0.36463 | 0.51315 | 0.34653 | 0.41183 | 0.39796 | 0.35791 | 0.43754 | 0.41864 |
+| 7  | 0.59164 | 0.63751 | 0.56524 | 0.55749 | 0.53986 | 0.61423 | 0.58049 | 0.43797 |
+| 8  | 0.28049 | 0.33110 | 0.30180 | 0.30602 | 0.36312 | 0.36126 | 0.35278 | 0.36426 |
+| 9  | 0.47488 | 0.45985 | 0.62794 | 0.57332 | 0.55970 | 0.50920 | 0.66378 | 0.63454 |
+| 10 | 0.35564 | 0.32955 | 0.40744 | 0.37355 | 0.31826 | 0.39753 | 0.36861 | 0.37598 |
+| 11 | 0.43150 | 0.37716 | 0.50877 | 0.35459 | 0.32734 | 0.34826 | 0.38380 | 0.37344 |
+| 12 | 0.33128 | 0.38855 | 0.42114 | 0.44269 | 0.38030 | 0.48124 | 0.44662 | 0.59789 |
+| 13 | 0.48697 | 0.38036 | 0.61206 | 0.68887 | 0.57855 | 0.61616 | 0.50768 | 0.60622 |
+| 14 | 0.36643 | 0.44420 | 0.43159 | 0.53476 | 0.44656 | 0.43496 | 0.48958 | 0.43222 |
+| 15 | 0.53614 | 0.55359 | 0.62964 | 0.61653 | 0.54529 | 0.45804 | 0.54106 | 0.55320 |
+| 16 | 0.52544 | 0.41243 | 0.50588 | 0.56342 | 0.44913 | 0.72019 | 0.45724 | 0.44457 |
+| 17 | 0.55671 | 0.47868 | 0.44302 | 0.54077 | 0.47656 | 0.47100 | 0.55484 | 0.50387 |
+| 18 | 0.35303 | 0.53229 | 0.46690 | 0.57985 | 0.43217 | 0.47950 | 0.44155 | 0.41275 |
+| 19 | 0.51977 | 0.50766 | 0.64570 | 0.65442 | 0.51323 | 0.40286 | 0.67653 | 0.47865 |
+| 20 | 0.43206 | 0.56369 | 0.46052 | 0.63333 | 0.61959 | 0.56094 | 0.69565 | 0.68087 |
+| 21 | 0.36152 | 0.55906 | 0.72957 | 0.29978 | 0.58698 | 0.62029 | 0.55847 | 0.62840 |
+| 22 | 0.47537 | 0.57904 | 0.47326 | 0.54711 | 0.50803 | 0.57531 | 0.51421 | 0.59999 |
+| 23 | 0.42915 | 0.54254 | 0.57442 | 0.56882 | 0.41560 | 0.57808 | 0.47550 | 0.58252 |
+| 24 | 0.60010 | 0.61482 | 0.62590 | 0.63555 | 0.51969 | 0.69423 | 0.52313 | 0.64737 |
+| 25 | 0.50253 | 0.45066 | 0.56862 | 0.47203 | 0.45831 | 0.52058 | 0.51374 | 0.53882 |
+| 26 | 0.49854 | 0.63164 | 0.35798 | 0.55008 | 0.61795 | 0.56451 | 0.60757 | 0.63961 |
+| 27 | 0.54097 | 0.46287 | 0.50815 | 0.60566 | 0.48019 | 0.66406 | 0.59244 | 0.52228 |
+| 28 | 0.65308 | 0.46735 | 0.51385 | 0.55395 | 0.69978 | 0.57423 | 0.44339 | 0.49252 |
+| 29 | 0.56156 | 0.56297 | 0.68805 | 0.65685 | 0.53782 | 0.51481 | 0.52210 | 0.48688 |
+| 30 | 0.36817 | 0.44193 | 0.68794 | 0.37693 | 0.50783 | 0.50324 | 0.63496 | 0.31855 |
+| 31 | 0.58812 | 0.67528 | 0.54146 | 0.64349 | 0.43800 | 0.55678 | 0.56302 | 0.65679 |
+| 32 | 0.64044 | 0.67918 | 0.68729 | 0.48698 | 0.60571 | 0.58514 | 0.50198 | 0.32147 |
+| 33 | 0.67376 | 0.72157 | 0.69012 | 0.64887 | 0.71054 | 0.62729 | 0.43922 | 0.72381 |
+| 34 | 0.71657 | 0.60707 | 0.58990 | 0.35042 | 0.40477 | 0.39450 | 0.42112 | 0.58938 |
+| 35 | 0.36939 | 0.33579 | 0.46993 | 0.33705 | 0.33054 | 0.37359 | 0.33982 | 0.34104 |
