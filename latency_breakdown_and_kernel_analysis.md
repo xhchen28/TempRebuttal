@@ -36,6 +36,17 @@ Table 1 reports the per-layer decode latency breakdown at **BS=1, 128K context**
 |          | attention                     | 1.050 |  | Full attention over fetched candidate tokens |
 |          | eviction_pq_predict           | 0.048 |  | PQ-based prediction for eviction policy |
 
+
+| Aspect | ParisKV | MagicPIG | PQCache |
+|--------|--------|----------|---------|
+| **Retrieval location** | Fully on GPU | CPU + GPU | CPU + GPU |
+| **CPU involvement** | None (only storage) | CPU hash traversal + attention | CPU lookup + transfer |
+| **Dominant bottleneck** | GPU retrieval (~0.55 ms) | CPU retrieval (5.88 / 6.49 ms) | CPU→GPU transfer (7.77 / 9.55 ms) |
+| **Data movement** | Sparse UVA fetch (top-$k$ only) | CPU-side KV access + sync | Bulk KV transfer (PCIe-bound) |
+| **Index structure** | Bitset + scan (O($n$)) | LSH + inverted lists | IVF-style clustering |
+| **GPU efficiency** | Fully pipelined | Partial (CPU–GPU sync gaps) | Partial (transfer-bound) |
+
+
 ### Main observations
 
 - **MagicPIG** is dominated by **CPU retrieval + CPU sparse attention**:  
