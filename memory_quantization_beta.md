@@ -2,14 +2,8 @@
 
 ## 1. Comprehensive KV Cache Memory Usage Analysis
 
-**Reviewer concern.**  
-“4-bit quant for kv-cache footprint is still a costly burden; please show the cost with request increase and give a comprehensive memory usage analysis.”
 
-We do not find the 4-bit Key cache to be a burden in practice. In fact, it is the main reason ParisKV is memory-efficient.
-
-The key difference from full attention is that we only store **Keys (not Values)** and store them in **4-bit precision**. As a result, the per-token memory drops from 4096B (bf16 K+V) to 512B for the Key cache. Even including all additional components, the total memory is about 556.5B per token, which is only ~13.6% of full KV.
-
-In other words, the 4-bit Key cache is not an overhead—it is precisely what makes the large memory reduction possible.
+We do not find the 4-bit Key cache to be a burden in practice. In fact, it is the main reason ParisKV is memory-efficient. The key difference from full attention is that we only store **Keys (not Values)** and store them in **4-bit precision**. As a result, the per-token memory drops from 4096B (bf16 K+V) to 512B for the Key cache. Even including all additional components, the total memory is about 556.5B per token, which is only ~13.6% of full KV.
 
 ### Per-token memory accounting
 
@@ -36,57 +30,10 @@ We measure KV cache memory on Qwen3-8B (32K context) while increasing the number
 | 32 | 144.00 | 19.56 | 86.4% |
 | 64 | 288.00 | 39.13 | 86.4% |
 
-The reduction ratio stays essentially constant because both methods scale linearly with sequence length and batch size.
-
-In practice, this translates directly into higher serving capacity. On an 80GB A100, full attention already runs out of memory around batch≈16, while ParisKV can still support batch=64, i.e., about 4× more concurrent requests.
-
-Looking at the memory breakdown, most of ParisKV’s footprint comes from the 4-bit Key cache. However, this should not be interpreted as a drawback: it still corresponds to only ~12.5% of the per-token cost of full KV storage. Without it, one would either need to store full-precision Keys (much higher memory) or give up scoring long-range tokens entirely.
-
-In other words, the 4-bit Key cache is not an overhead—it is exactly what makes large-scale memory reduction possible while preserving retrieval quality.
-
 ---
 
-## 2. Clarification of 4-bit RSQ-IP Quantization
 
-**Reviewer concern.**  
-“In RSQ-IP, the 4-bit quantization is unclear; Appendix B2.2.2 says 1-bit sign + 3-bit digits, but it is not clear whether this is e2m1 or e3m0, which is not reproducible.”
-
-Our 4-bit RSQ-IP is **not a floating-point format** (i.e., neither e2m1 nor e3m0). Each coordinate is represented by:
-- 1-bit sign  
-- 3-bit index into an 8-level magnitude codebook
-
-This is a codebook-based scalar quantization scheme. After normalization and random rotation, each coordinate satisfies $u_j^2 \sim \mathrm{Beta}(1/2, (m-1)/2)$, so $|u_j|$ follows a non-uniform distribution concentrated near zero. We therefore design the quantizer in a **data-independent** way: we sample $g \sim \mathcal{N}(0, I_m)$, normalize $u = g / \|g\|_2$, collect $|u_j|$, and apply **Lloyd–Max quantization** to obtain 8 reconstruction levels that minimize MSE.
-
-**Why not FP4?**  
-FP4 formats allocate precision based on exponent ranges, which does not match this distribution. In contrast, Lloyd–Max directly adapts to the actual shape of the data, leading to lower quantization error.
-
-
-### Codebook construction
-
-We construct the codebook in a **data-independent** manner:
-
-1. Sample `g ~ N(0, I_m)`.
-2. Normalize `u = g / ||g||_2`, which yields points uniformly distributed on the sphere.
-3. Collect samples of `|u_j|`.
-4. Run **Lloyd–Max scalar quantization** with 8 bins
-
-We sample **10M** points from this theoretical distribution and obtain the following codebook:
-
-**Decision thresholds (7):**
-- [0.084, 0.170, 0.258, 0.350, 0.449, 0.559, 0.690]
-
-**Reconstruction centers (8):**
-- [0.042, 0.127, 0.213, 0.303, 0.397, 0.500, 0.617, 0.763]
-
-### Encoding / decoding
-
-- **Encoding:** use `torch.bucketize` on `|u_j|` to get a 3-bit bin index
-- **Decoding:** map the index to its corresponding reconstruction center
-
-This procedure is fixed at initialization and shared across all layers and dimensions. It depends only on the block dimension \(m\), not on any model or dataset.
-
-
-## 3. Empirical Validation of the SRHT-Induced Beta Prior
+## 2. Empirical Validation of the SRHT-Induced Beta Prior
 
 ### Setup
 
