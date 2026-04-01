@@ -1,11 +1,5 @@
-# Latency Breakdown and Kernel Analysis
+# Latency Breakdown and Kernel Performance
 
-Our analysis shows that the performance gap mainly comes from two factors:
-
-1. **ParisKV avoids CPU-side retrieval and synchronization**, while MagicPIG and PQCache both incur substantial CPU-side overhead.
-2. **ParisKV also benefits from highly optimized GPU kernels** across all retrieval stages, so the gains are not only architectural, but also implementation-level.
-
----
 
 ## 1. End-to-end runtime breakdown
 
@@ -40,18 +34,6 @@ Table 1 reports the per-layer decode latency breakdown at **BS=1, 128K context**
 | **GPU efficiency** | Fully pipelined | Partial (CPU–GPU sync gaps) | Partial (transfer-bound) |
 
 
-### Main observations
-
-- **MagicPIG** is dominated by **CPU retrieval + CPU sparse attention**:  
-  `5.881 ms / 6.491 ms`
-- **PQCache** is dominated by **CPU→GPU KV transfer**:  
-  `7.770 ms / 9.555 ms`
-- **ParisKV** keeps the retrieval path on GPU and only performs a small **UVA sparse gather** for the final top-k KV:
-  - retrieval on GPU: `0.549 ms`
-  - sparse KV fetch: `0.097 ms`
-  - attention: `0.066 ms`
-
----
 
 ## 2. Why ParisKV is faster
 
