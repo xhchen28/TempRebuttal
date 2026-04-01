@@ -144,50 +144,7 @@ We report prefill latency (TTFT) as a function of sequence length.
 | 256K | 117.71 | OOM | 126.71 | 139.50 | 116.20 | OOM | 141.10 | 104.70 | OOM |152.12|
 | 384K | OOM | OOM | 274.85 | 290.40 | OOM | OOM | 272.80 | 238.80 | OOM |309.26|
 
-## 5. Main takeaways from the expanded comparison
-
-Overall, the expanded results consistently support the main claim of our paper: **ParisKV provides the best accuracy-efficiency tradeoff among practical long-context retrieval baselines**, especially in the offloading setting and under long-generation workloads.
-
-### Accuracy
-
-Across the newly added baselines and tasks, ParisKV is consistently the strongest or near-full-accuracy method.
-
-- **LongBench-v2.**
-  - On **Qwen3-4B**, ParisKV reaches **24.60**, outperforming all retrieval baselines and remaining very close to Full (**25.84**). The next strongest competitor is RetroInfer at **23.69**, while most others are substantially lower (e.g., Quest **19.12**, Twilight **19.12**, FreeKV **19.68**, PQCache **17.91**, ShadowKV **16.30**).
-  - On **Qwen3-8B**, ParisKV achieves **33.07**, again the best among retrieval methods and nearly matching Full (**33.59**). Competing methods fall much further behind, e.g., PQCache **25.50**, Quest **23.90**, Twilight **20.32**, RetroInfer **20.48**, and ShadowKV **15.90**.
-  - On **DS-R1-8B**, ParisKV reaches **28.43**, clearly outperforming all baselines; the next best methods are Quest (**23.51**) and SOCKET (**21.51**).
-
-- **RULER.** ParisKV achieves **83.49** average, which is the highest among all retrieval baselines and remains very close to Full (**84.12**). In contrast, the next-best retrieval methods are ShadowKV (**80.29**), Quest (**79.34**), and SOCKET (**78.92**).
-
-- **GPQA-diamond.** ParisKV obtains **72.22**, substantially outperforming all retrieval baselines and even exceeding Full (**64.14**). The gap is particularly large compared with Quest (**38.40**), RetroInfer (**38.90**), MagicPIG (**32.32**), and PQCache (**38.38**).
-
-These results show that when ParisKV is not the absolute fastest method under a specific setting, it still provides **substantially stronger accuracy**, and in most cases it is the only method that remains both competitive in speed and close to full-attention quality.
-
-### Efficiency and scalability
-
-From an efficiency perspective, ParisKV is the strongest **practical** method among the baselines that support offloading and remain usable at longer contexts.
-
-- At **128K, bs=1**, ParisKV reaches **41.10 tok/s**, which is close to Full (**43.20 tok/s**) and faster than RetroInfer (**34.31 tok/s**), Twilight (**0.90 tok/s**), and SOCKET (**4.44 tok/s**). Some methods report higher raw throughput at this single point (e.g., MagicPIG, PQCache), but they come with much lower accuracy and weaker scalability.
-- More importantly, ParisKV scales to larger batch sizes and longer contexts:
-  - at **bs=2**, ParisKV reaches **69.80 tok/s** vs. Full **60.70 tok/s**;
-  - at **bs=8**, ParisKV reaches **150.00 tok/s**, while Full is already **OOM** and several baselines are also **OOM** or unsupported.
-- In decode latency, ParisKV becomes increasingly favorable as context grows:
-  - at **256K**, ParisKV is **32.16 ms/token**, slightly faster than Full (**33.29**) and clearly faster than RetroInfer (**37.53**), MagicPIG (**230.24**), PQCache (**754.76**), and ShadowKV (**150.98**);
-  - at **384K**, ParisKV remains runnable at **37.19 ms/token**, whereas Full, Quest, Twilight, and SOCKET are **OOM**.
-
-This behavior is important for the target setting of our paper: **million-scale KV caches with offloading and long generation**. In this regime, scalability and robustness matter more than isolated speed numbers at a single short setting.
-
-### Why this comparison supports our claims
-
-The newly added baselines clarify two key points.
-
-1. **Quest can be competitive in a narrow setting, but it does not provide the same practical scalability.**  
-   For example, Quest is slightly faster than ParisKV at **bs=3** (**93.20** vs. **93.10 tok/s**). However, Quest does **not support offloading** in our target setting and cannot scale beyond small-batch configurations (e.g., no valid result at larger batch sizes), whereas ParisKV continues to scale to **bs=8** and long contexts. Thus, Quest's advantage is limited to a narrow operating region and does not contradict our main claim.
-
-2. **ShadowKV is faster in some settings, but the accuracy-efficiency tradeoff is weaker, especially for long generation.**  
-   ShadowKV is faster in some decode measurements, but its accuracy is consistently lower than ParisKV (e.g., **16.30 vs. 24.60** on LongBench-v2/Qwen3-4B, **15.90 vs. 33.07** on LongBench-v2/Qwen3-8B, and **80.29 vs. 83.49** on RULER). In addition, ShadowKV still attends to **all generated tokens during decoding**, so under long-generation workloads its decode computation increasingly resembles approximate full attention. This makes it less suitable for the target scenario of our paper, where both **offloaded KV access** and **long decode horizons** must be handled efficiently. In practice, this also limits batch-size scalability and leads to worse decode-time behavior as generation grows.
-
-In summary, the expanded evaluation strengthens rather than weakens our original claims: **ParisKV is the most balanced method overall, combining near-full or best accuracy with strong throughput, better long-context scalability, and practical support for offloaded long-generation inference.**
+In summary, the expanded evaluation strengthens rather than weakens our original claims: **ParisKV is the most balanced method overall, combining near-full or best accuracy with strong throughput, better long-context scalability, and practical support for offloaded long-generation inference.** 
 
 > **Note on Twilight.**  
 > We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. 
