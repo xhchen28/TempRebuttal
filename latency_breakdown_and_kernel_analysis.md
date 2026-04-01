@@ -34,47 +34,7 @@
 
 
 
-## 2. Why ParisKV is faster
-
-### 2.1 Avoiding CPU-side retrieval and synchronization
-
-A key difference is that **ParisKV keeps the entire retrieval pipeline on GPU**, while both MagicPIG and PQCache involve substantial CPU-side operati
-
-In contrast, ParisKV:
-
-- avoids CPU-side retrieval entirely,
-- uses CPU memory (DRAM) only as an extended storage pool,
-- and performs **GPU-side sparse gathering via UVA**, transferring only the final top-k KV vectors (e.g., `k=100`).
-
-This significantly reduces both **data movement** and **CPU–GPU synchronization overhead**.
-
----
-
-### 2.2 GPU-native retrieval design
-
-ParisKV uses a **collision-based coarse candidate selection algorithm** that is more GPU-friendly than conventional PQ- or LSH-style retrieval pipelines under the same recall target.
-
-Importantly, ParisKV does **not** require explicit CPU-side traversal of dynamic cluster-to-token mappings during decoding. Instead:
-
-- each token stores a **1-byte cluster code**,
-- query-selected clusters are compressed into a **bitset**  
-  (e.g., `256 clusters → 32 bytes`),
-- candidate selection is implemented as a **single linear scan with bitwise tests**.
-
-This avoids the expensive maintenance and traversal of dynamic inverted lists on CPU and enables a fully GPU-resident retrieval pipeline.
-
----
-
-### 2.3 Kernel-level optimizations also matter
-
-Beyond the system-level design, a substantial portion of the speedup also comes from custom CUDA kernels.  
-Tables 2–5 report the per-operator results.
-
-These results show that the performance gains are **not solely due to architectural differences**, but also come from **highly optimized GPU kernels across all stages**.
-
----
-
-## 3. Operator-level analysis
+## 2. Operator-level analysis
 
 ### Table 2. Collision kernel
 
