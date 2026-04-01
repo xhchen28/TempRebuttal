@@ -3,7 +3,6 @@
 
 ## 1. End-to-end runtime breakdown
 
-Table 1 reports the per-layer decode latency breakdown at **BS=1, 128K context**.
 
 ### Table 1. Per-Layer Decode Latency Breakdown (BS=1, 128K context, per layer)
 
