@@ -118,7 +118,7 @@ Notation:
 ### Throughput at 128K decode (tokens/s)
 
 | bs | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV | ShadowKV|
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 1 | 48.08 | 0.90 | 34.31 | 41.10 | 43.20 | 4.44 | 120.57 | 243.91 | 21.78 |53.30|
 | 2 | NA | OOM | 65.29 | 69.80 | 60.70 | OOM | NA | NA | 29.01 | 100.26|
 | 3 | NA | OOM | 93.20 | 93.10 | 70.00 | OOM | NA | NA | 34.67 | 150.98|
