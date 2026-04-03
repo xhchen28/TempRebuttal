@@ -101,11 +101,11 @@ We summarize the key configurations below. All methods are tuned to match **comp
   </tbody>
 </table>
 
-### GPQA-diamond
+### GPQA-diamond (ShadowKV does not support long-generation scenarios)
 
-| Method | Qwen3-4B | Quest | RetroInfer | FreeKV | MagicPig++ | PQCache | ParisKV |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Score | 64.14 | 38.40 | 38.90 | 58.16 | 32.32 | 38.38 | **72.22** |
+| Method | Qwen3-4B | Quest | RetroInfer | FreeKV | MagicPig++ | PQCache | ParisKV | ShadowKV |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Score | 64.14 | 38.40 | 38.90 | 58.16 | 32.32 | 38.38 | **72.22** | NA |
 
 ---
 
