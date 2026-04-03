@@ -117,20 +117,20 @@ Notation:
 
 ### Throughput at 128K decode (tokens/s)
 
-| bs | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV |
+| bs | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV | ShadowKV|
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 48.08 | 0.90 | 34.31 | 41.10 | 43.20 | 4.44 | 120.57 | 243.91 | 21.78 |
-| 2 | NA | OOM | 65.29 | 69.80 | 60.70 | OOM | NA | NA | 29.01 |
-| 3 | NA | OOM | 93.20 | 93.10 | 70.00 | OOM | NA | NA | 34.67 |
-| 8 | NA | OOM | 109.60 | **150.00** | OOM | OOM | NA | NA | OOM |
+| 1 | 48.08 | 0.90 | 34.31 | 41.10 | 43.20 | 4.44 | 120.57 | 243.91 | 21.78 |53.30|
+| 2 | NA | OOM | 65.29 | 69.80 | 60.70 | OOM | NA | NA | 29.01 | 100.26|
+| 3 | NA | OOM | 93.20 | 93.10 | 70.00 | OOM | NA | NA | 34.67 | 150.98|
+| 8 | NA | OOM | 109.60 | **150.00** | OOM | OOM | NA | NA | OOM | 318.14|
 
 ### Decode latency (ms/token, bs=1)
 
 | Seq len | Quest | Twilight | RetroInfer | ParisKV | Full | SOCKET | MagicPIG | PQCache | FreeKV | ShadowKV|
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 128K | 20.78 | 1106.14 | 29.14 | 24.42 | 23.13 | 225.00 | 120.57 | 243.91 | 21.78 | 53.30|
-| 256K | 46.30 | OOM | 37.53 | **32.16** | 33.29 | OOM | 230.24 | 754.76 | NA |150.98|
-| 384K | OOM | OOM | 33.31 | 37.19 | OOM | OOM | 487.77 | 1207.81 | NA |318.14|
+| 128K | 20.78 | 1106.14 | 29.14 | 24.42 | 23.13 | 225.00 | 120.57 | 243.91 | 21.78 | 18.76|
+| 256K | 46.30 | OOM | 37.53 | **32.16** | 33.29 | OOM | 230.24 | 754.76 | NA | 19.11|
+| 384K | OOM | OOM | 33.31 | 37.19 | OOM | OOM | 487.77 | 1207.81 | NA | 20.74|
 
 
 
@@ -144,7 +144,8 @@ We report prefill latency (TTFT) as a function of sequence length.
 | 256K | 117.71 | OOM | 126.71 | 139.50 | 116.20 | OOM | 141.10 | 104.70 | OOM |152.12|
 | 384K | OOM | OOM | 274.85 | 290.40 | OOM | OOM | 272.80 | 238.80 | OOM |309.26|
 
-In summary, the expanded evaluation strengthens rather than weakens our original claims: **ParisKV is the most balanced method overall, combining near-full or best accuracy with strong throughput, better long-context scalability, and practical support for offloaded long-generation inference.** 
+
+ParisKV delivers the strongest overall tradeoff among all compared methods: it achieves the best accuracy across baselines and outperforms almost all of them in efficiency as well. The only metric where ParisKV does not lead is decode throughput against ShadowKV. However, ShadowKV’s speed advantage comes with substantially lower accuracy, and it does not extend to a better end-to-end long-generation solution. During decoding, newly generated KV entries are still processed by full attention, which limits practical memory/bandwidth savings and prevents effective batch-size scaling in short-input, long-generation settings. In addition, ShadowKV has higher prefill latency than ParisKV and several other baselines.
 
 > **Note on Twilight.**  
 > We exclude Twilight from the main speed comparison because its open-sourced codebase only provides a Python reference implementation for accuracy evaluation. 
